@@ -237,7 +237,7 @@ index 30dcdee..2cb2e68 100644
 The parser at `internal/diff/parser.go` handles all of this:
 
 ```go
-import "github.com/shreybhardwaj/zizou/internal/diff"
+import "github.com/BhardwajShrey/zizou/internal/diff"
 
 // Parse the diff
 parser := diff.NewParser()

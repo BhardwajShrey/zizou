@@ -123,7 +123,7 @@ hunkHeaderRegex = `^@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@`
 ### Basic Parsing
 
 ```go
-import "github.com/shreybhardwaj/zizou/internal/diff"
+import "github.com/BhardwajShrey/zizou/internal/diff"
 
 parser := diff.NewParser()
 parsedDiff, err := parser.Parse(diffContent)

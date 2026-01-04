@@ -5,11 +5,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/shreybhardwaj/zizou/internal/cache"
-	"github.com/shreybhardwaj/zizou/internal/client"
-	"github.com/shreybhardwaj/zizou/internal/diff"
-	"github.com/shreybhardwaj/zizou/internal/output"
-	"github.com/shreybhardwaj/zizou/internal/review"
+	"github.com/BhardwajShrey/zizou/internal/cache"
+	"github.com/BhardwajShrey/zizou/internal/client"
+	"github.com/BhardwajShrey/zizou/internal/diff"
+	"github.com/BhardwajShrey/zizou/internal/output"
+	"github.com/BhardwajShrey/zizou/internal/review"
 	"github.com/spf13/cobra"
 )
 

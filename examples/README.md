@@ -35,7 +35,7 @@ Comprehensive demo showing all parser capabilities and edge cases.
 ## Quick Start
 
 ```go
-import "github.com/shreybhardwaj/zizou/internal/diff"
+import "github.com/BhardwajShrey/zizou/internal/diff"
 
 // Parse a diff
 parser := diff.NewParser()

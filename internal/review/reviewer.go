@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/shreybhardwaj/zizou/internal/cache"
-	"github.com/shreybhardwaj/zizou/internal/diff"
+	"github.com/BhardwajShrey/zizou/internal/cache"
+	"github.com/BhardwajShrey/zizou/internal/diff"
 )
 
 // Client defines the interface for an AI client

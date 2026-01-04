@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/shreybhardwaj/zizou/internal/review"
+	"github.com/BhardwajShrey/zizou/internal/review"
 )
 
 // Format represents the output format

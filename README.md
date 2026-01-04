@@ -13,13 +13,13 @@ An AI-powered code review CLI tool that uses Claude to analyze git diffs and pro
 ## Installation
 
 ```bash
-go install github.com/shreybhardwaj/zizou@latest
+go install github.com/BhardwajShrey/zizou@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/shreybhardwaj/zizou
+git clone https://github.com/BhardwajShrey/zizou
 cd zizou
 go build
 ```

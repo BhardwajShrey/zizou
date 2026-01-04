@@ -92,7 +92,7 @@ go run examples/line_by_line_demo.go
 
 ### Programmatic Usage
 ```go
-import "github.com/shreybhardwaj/zizou/internal/diff"
+import "github.com/BhardwajShrey/zizou/internal/diff"
 
 parser := diff.NewParser()
 d, _ := parser.Parse(diffContent)

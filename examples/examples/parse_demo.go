@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/shreybhardwaj/zizou/internal/diff"
+	"github.com/BhardwajShrey/zizou/internal/diff"
 )
 
 func main() {

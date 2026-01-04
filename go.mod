@@ -1,4 +1,4 @@
-module github.com/shreybhardwaj/zizou
+module github.com/BhardwajShrey/zizou
 
 go 1.21.2
 

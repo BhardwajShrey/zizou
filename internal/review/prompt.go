@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/shreybhardwaj/zizou/internal/diff"
+	"github.com/BhardwajShrey/zizou/internal/diff"
 )
 
 // BuildPrompt creates a prompt for Claude to review the diff

@@ -1,0 +1,234 @@
+diff --git a/app/main.go b/app/main.go
+index d2b3e23..2cb2e68 100644
+--- a/app/main.go
++++ b/app/main.go
+@@ -5,12 +5,12 @@ package main
+ 
+ import (
+ 	"fmt"
+-	"log"
+ 	"os"
+ 	"os/exec"
+-	"path"
+-	"strings"
+ 	"syscall"
++
++	"github.com/codecrafters-io/docker-starter-go/dockerutils"
++	"github.com/codecrafters-io/docker-starter-go/throwerror"
+ )
+ 
+ // the next line is just for reference and contains the os.Args slice
+@@ -21,7 +21,10 @@ func main() {
+ 	command := os.Args[3]
+ 	args := os.Args[4:len(os.Args)]
+ 
+-	EnterNewJail(os.Args[3])
++	image := os.Args[2]
++
++	jailPath := EnterNewJail(os.Args[3], image)
++	defer os.Remove(jailPath)
+ 
+ 	cmd := exec.Command(command, args...)
+ 	cmd.Stderr = os.Stderr
+@@ -35,40 +38,25 @@ func main() {
+ 	os.Exit(cmd.ProcessState.ExitCode())
+ }
+ 
+-func EnterNewJail(filepath string) {
++func EnterNewJail(filepath string, image string) string {
+ 	tempDirPath, err := os.MkdirTemp("", "temp_folder_*")
+ 	if err != nil {
+-		throwError(err, "Unable to create temp directory")
++		throwerror.ThrowError(err, "Unable to create temp directory")
+ 	}
+ 
+-	defer os.Remove(tempDirPath)
+-
+ 	err = os.Chmod(tempDirPath, 0777)
+ 	if err != nil {
+-		throwError(err, "Error modifying rwx on tempDirPath")
+-	}
+-
+-	filepathSplit := strings.Split(filepath, "/")
+-	jailedDirPath := path.Join(tempDirPath, strings.Join(filepathSplit[0:len(filepathSplit)-1], "/"))
+-
+-	err = os.MkdirAll(jailedDirPath, 0777)
+-	if err != nil {
+-		throwError(err, fmt.Sprintf("Error in mkdirall to %s", jailedDirPath))
++		throwerror.ThrowError(err, "Error modifying rwx on tempDirPath")
+ 	}
+ 
+-	// not in the mood to write code to copy files
+-	err = os.Link(filepath, path.Join(tempDirPath, filepath))
+-	if err != nil {
+-		throwError(err, "Error in link command")
+-	}
++	authToken := dockerutils.GetAuthToken(image)
++	manifest := dockerutils.GetManifest(image, authToken)
++	dockerutils.DownloadAndExtractLayers(manifest.Layers, image, authToken, tempDirPath)
+ 
+ 	err = syscall.Chroot(tempDirPath)
+ 	if err != nil {
+-		throwError(err, fmt.Sprintf("Error in executing chroot on %s", tempDirPath))
++		throwerror.ThrowError(err, fmt.Sprintf("Error in executing chroot on %s", tempDirPath))
+ 	}
+-}
+ 
+-func throwError(err error, msg string) {
+-	log.Fatalf("%s: %v\n", msg, err)
+-	os.Exit(1)
++	return tempDirPath
+ }
+diff --git a/dockerutils/endpoints.go b/dockerutils/endpoints.go
+new file mode 100644
+index 0000000..be1e289
+--- /dev/null
++++ b/dockerutils/endpoints.go
+@@ -0,0 +1,15 @@
++package dockerutils
++
++import "fmt"
++
++func AuthRegistryEndpoint(image string) string {
++	return fmt.Sprintf("https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/%s:pull", image)
++}
++
++func GetManifestEndpoint(image string) string {
++	return fmt.Sprintf("https://registry.hub.docker.com/v2/library/%s/manifests/latest", image)
++}
++
++func GetBlobFileEndpoint(image, digest string) string {
++	return fmt.Sprintf("https://registry.hub.docker.com/v2/library/%s/blobs/%s", image, digest)
++}
+diff --git a/dockerutils/utils.go b/dockerutils/utils.go
+new file mode 100644
+index 0000000..7a42ea7
+--- /dev/null
++++ b/dockerutils/utils.go
+@@ -0,0 +1,109 @@
++package dockerutils
++
++import (
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/http"
++	"os"
++	"os/exec"
++
++	"github.com/codecrafters-io/docker-starter-go/throwerror"
++)
++
++var mediaType string = "application/vnd.docker.distribution.manifest.v2+json"
++
++type AuthResponse struct {
++	Token string `json:"token"`
++}
++
++type manifestLayer struct {
++	MediaType string `json:"mediaType"`
++	Digest    string `json:"digest"`
++	Size      int    `json:"size"`
++}
++
++type Manifest struct {
++	SchemaVersion int             `json:"schemaVersion"`
++	MediaType     string          `json:"mediaType"`
++	Layers        []manifestLayer `json:"layers"`
++}
++
++func GetAuthToken(image string) *AuthResponse {
++	res, err := http.Get(AuthRegistryEndpoint(image))
++	if err != nil {
++		throwerror.ThrowError(err, "Unable to get auth-token from docker")
++	}
++
++	var authToken AuthResponse
++	err = json.NewDecoder(res.Body).Decode(&authToken)
++	if err != nil {
++		throwerror.ThrowError(err, "Error encoding get-auth-token res-body into AuthResponse type")
++	}
++
++	return &authToken
++}
++
++func GetManifest(image string, authToken *AuthResponse) Manifest {
++	req, err := http.NewRequest("GET", GetManifestEndpoint(image), nil)
++	if err != nil {
++		throwerror.ThrowError(err, "Unable to create request to get manifest")
++	}
++
++	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authToken.Token))
++	req.Header.Set("Accept", mediaType)
++
++	res, err := http.DefaultClient.Do(req)
++	if err != nil {
++		throwerror.ThrowError(err, "Unable to get manifest from registry")
++	}
++
++	var manifest Manifest
++	err = json.NewDecoder(res.Body).Decode(&manifest)
++	if err != nil {
++		throwerror.ThrowError(err, "Unable to decode get-manifest res-body into Manifest type")
++	}
++
++	if manifest.MediaType != mediaType {
++		// lets use the previous value of err itself
++		throwerror.ThrowError(err, "Mediatype in manifest response not matching with mediaType in request (Accept header)")
++	}
++
++	return manifest
++}
++
++func DownloadAndExtractLayers(layers []manifestLayer, image string, authToken *AuthResponse, tempDirPath string) {
++	for _, layer := range layers {
++		req, err := http.NewRequest("GET", GetBlobFileEndpoint(image, layer.Digest), nil)
++		if err != nil {
++			throwerror.ThrowError(err, "Unable to create request to download layer")
++		}
++
++		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authToken.Token))
++
++		res, err := http.DefaultClient.Do(req)
++		if err != nil || res.StatusCode != 200 {
++			throwerror.ThrowError(err, "Unable to download blob from registry")
++		}
++
++		defer res.Body.Close()
++
++		resBody, err := io.ReadAll(res.Body)
++		if err != nil {
++			throwerror.ThrowError(err, "Could not read response body downloaded from blob registry")
++		}
++
++		filename := "image.tar"
++		file, err := os.OpenFile(filename, os.O_TRUNC|os.O_RDWR|os.O_CREATE, 0777)
++		if err != nil {
++			throwerror.ThrowError(err, "Unable to open new file to write blob to")
++		}
++
++		_, err = file.Write(resBody)
++		if err != nil {
++			throwerror.ThrowError(err, "Unable to write blob to newly created file")
++		}
++
++		exec.Command("tar", "-xf", filename, "-C", tempDirPath).Run()
++	}
++}
+diff --git a/throwerror/throwError.go b/throwerror/throwError.go
+new file mode 100644
+index 0000000..9623efa
+--- /dev/null
++++ b/throwerror/throwError.go
+@@ -0,0 +1,11 @@
++package throwerror
++
++import (
++	"log"
++	"os"
++)
++
++func ThrowError(err error, msg string) {
++	log.Fatalf("%s: %v\n", msg, err)
++	os.Exit(1)
++}

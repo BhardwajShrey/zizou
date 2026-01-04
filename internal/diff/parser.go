@@ -43,6 +43,11 @@ func (p *Parser) Parse(content string) (*Diff, error) {
 
 		// Check for file header
 		if matches := fileHeaderRegex.FindStringSubmatch(line); matches != nil {
+			// Add current hunk to current file before switching files
+			if currentHunk != nil && currentFile != nil {
+				currentFile.Hunks = append(currentFile.Hunks, *currentHunk)
+			}
+			// Add current file to diff before switching to new file
 			if currentFile != nil {
 				diff.Files = append(diff.Files, *currentFile)
 			}
@@ -51,6 +56,7 @@ func (p *Parser) Parse(content string) (*Diff, error) {
 				NewPath: matches[2],
 				Hunks:   []Hunk{},
 			}
+			currentHunk = nil
 			continue
 		}
 

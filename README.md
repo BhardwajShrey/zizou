@@ -139,6 +139,16 @@ git show HEAD | zizou
 git diff main..feature-branch | zizou --output json
 ```
 
+## Documentation
+
+For detailed documentation, see:
+
+- **[Running Zizou](RUN_ZIZOU.md)** - Complete usage guide with all options
+- **[Documentation Index](docs/README.md)** - Full documentation
+- **[Diff Format Guide](docs/DIFF_GUIDE.md)** - Understanding git diff format
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Cheat sheet for diff format
+- **[Parser Guide](docs/DIFF_PARSING.md)** - Using the diff parser
+
 ## License
 
 MIT

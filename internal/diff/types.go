@@ -7,9 +7,17 @@ type Diff struct {
 
 // FileDiff represents changes to a single file
 type FileDiff struct {
-	OldPath string
-	NewPath string
-	Hunks   []Hunk
+	OldPath  string
+	NewPath  string
+	Hunks    []Hunk
+	IsNew    bool   // File was created
+	IsDeleted bool  // File was deleted
+	IsRenamed bool  // File was renamed
+	IsCopied  bool  // File was copied
+	IsBinary  bool  // File is binary
+	OldMode   string // Old file mode (e.g., "100644")
+	NewMode   string // New file mode (e.g., "100755")
+	Similarity int  // Similarity index for renames/copies (0-100)
 }
 
 // Hunk represents a section of changes within a file

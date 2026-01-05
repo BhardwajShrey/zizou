@@ -8,7 +8,7 @@ We've saved your diff to `test_diff.txt`. Here's how to use Zizou with it:
 
 Set your Claude API key:
 ```bash
-export ANTHROPIC_API_KEY="your-api-key-here"
+export ANTHROPIC_API_KEY_ZIZOU="your-api-key-here"
 ```
 
 Or pass it via flag:
@@ -237,7 +237,7 @@ Usage:
   zizou [flags]
 
 Flags:
-      --api-key string     Claude API key (or set ANTHROPIC_API_KEY env var)
+      --api-key string     Claude API key (or set ANTHROPIC_API_KEY_ZIZOU env var)
       --cache-dir string   Cache directory (defaults to ~/.zizou/cache)
   -f, --file string        Input file containing git diff (defaults to stdin)
   -h, --help               help for zizou
@@ -280,7 +280,7 @@ Flags:
 ### "API key required"
 Set your API key:
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+export ANTHROPIC_API_KEY_ZIZOU="sk-ant-..."
 ```
 
 ### "Failed to parse diff"

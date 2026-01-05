@@ -10,19 +10,19 @@ import (
 	"github.com/BhardwajShrey/zizou/internal/diff"
 )
 
-// Client defines the interface for an AI client
-type Client interface {
-	SendMessage(ctx context.Context, prompt string) (string, error)
+// DiffReviewer defines the interface for a diff reviewer client
+type DiffReviewer interface {
+	ReviewDiff(ctx context.Context, d *diff.Diff) (*Result, error)
 }
 
-// Reviewer performs code reviews using an AI client
+// Reviewer performs code reviews with caching
 type Reviewer struct {
-	client Client
+	client DiffReviewer
 	cache  cache.Cache
 }
 
 // NewReviewer creates a new reviewer
-func NewReviewer(client Client, cache cache.Cache) *Reviewer {
+func NewReviewer(client DiffReviewer, cache cache.Cache) *Reviewer {
 	return &Reviewer{
 		client: client,
 		cache:  cache,
@@ -42,19 +42,10 @@ func (r *Reviewer) Review(ctx context.Context, d *diff.Diff) (*Result, error) {
 		}
 	}
 
-	// Build prompt
-	prompt := BuildPrompt(d)
-
-	// Send to AI client
-	response, err := r.client.SendMessage(ctx, prompt)
+	// Send to reviewer client (handles prompt building and parsing)
+	result, err := r.client.ReviewDiff(ctx, d)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get review from AI: %w", err)
-	}
-
-	// Parse response
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse AI response: %w", err)
 	}
 
 	// Cache result

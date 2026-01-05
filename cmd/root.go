@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	inputFile  string
-	outputFmt  string
-	apiKey     string
-	cacheDir   string
-	noCache    bool
+	inputFile string
+	outputFmt string
+	apiKey    string
+	cacheDir  string
+	noCache   bool
 )
 
 var rootCmd = &cobra.Command{
@@ -35,7 +35,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.Flags().StringVarP(&inputFile, "file", "f", "", "Input file containing git diff (defaults to stdin)")
 	rootCmd.Flags().StringVarP(&outputFmt, "output", "o", "text", "Output format (text, json, markdown)")
-	rootCmd.Flags().StringVar(&apiKey, "api-key", "", "Claude API key (or set ANTHROPIC_API_KEY env var)")
+	rootCmd.Flags().StringVar(&apiKey, "api-key", "", "Claude API key (or set ANTHROPIC_API_KEY_ZIZOU env var)")
 	rootCmd.Flags().StringVar(&cacheDir, "cache-dir", "", "Cache directory (defaults to ~/.zizou/cache)")
 	rootCmd.Flags().BoolVar(&noCache, "no-cache", false, "Disable caching")
 }
@@ -80,19 +80,32 @@ func runReview(cmd *cobra.Command, args []string) error {
 		cacheStore = cache.NewNoOpCache()
 	}
 
-	// Get API key
-	if apiKey == "" {
-		apiKey = os.Getenv("ANTHROPIC_API_KEY")
-	}
-	if apiKey == "" {
-		return fmt.Errorf("API key required: set --api-key flag or ANTHROPIC_API_KEY environment variable")
+	// Create configuration
+	config := client.DefaultConfig()
+
+	// Override API key if provided via flag
+	if apiKey != "" {
+		config.APIKey = apiKey
+	} else {
+		// Try to load from environment
+		if err := config.LoadFromEnv(); err != nil {
+			return fmt.Errorf("API key required: set --api-key flag or ANTHROPIC_API_KEY_ZIZOU environment variable")
+		}
 	}
 
-	// Initialize Claude client
-	claudeClient := client.NewClaudeClient(apiKey)
+	// Validate configuration
+	if err := config.Validate(); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
+	}
 
-	// Create reviewer
-	reviewer := review.NewReviewer(claudeClient, cacheStore)
+	// Initialize enhanced Claude client with retry and rate limiting
+	reviewerClient, err := client.NewReviewerClient(config)
+	if err != nil {
+		return fmt.Errorf("failed to create reviewer client: %w", err)
+	}
+
+	// Create reviewer with caching
+	reviewer := review.NewReviewer(reviewerClient, cacheStore)
 
 	// Perform review
 	comments, err := reviewer.Review(cmd.Context(), parsedDiff)

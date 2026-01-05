@@ -45,7 +45,7 @@ git diff | zizou --output markdown
 Set your Anthropic API key:
 
 ```bash
-export ANTHROPIC_API_KEY="your-api-key"
+export ANTHROPIC_API_KEY_ZIZOU="your-api-key"
 ```
 
 Or pass it directly:

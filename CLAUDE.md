@@ -14,7 +14,7 @@ When working in this repository, keep all output **concise yet informative**:
 - **Be specific**: Reference exact files and line numbers (e.g., "parser.go:215-235").
 - **Be actionable**: Provide concrete next steps or specific code examples when suggesting changes.
 - **Avoid verbosity**: Skip unnecessary explanations, redundant confirmations, or over-documentation.
-- **Match the project philosophy**: Zizou itself emphasizes "concise, impact-driven feedback" and "optimize for minimal tokens" (see reviewer_client.go:55, 137). Apply the same principle to your communication.
+- **Match the project philosophy**: Zizou itself emphasizes "concise, impact-driven feedback" and "optimize for minimal tokens" (see reviewer_client.go:55, 137). Apply the same principle to your communication. Even the git commit messages should be as concise as possible
 - **Be curious**: Think hard on each problem and don't hesitate to point out any flaws in my decisions. Always present me with follow-up and food-for-thought questions if there are any.
 
 Example:

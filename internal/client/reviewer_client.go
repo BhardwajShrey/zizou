@@ -51,16 +51,23 @@ func (rc *ReviewerClient) ReviewDiff(ctx context.Context, d *diff.Diff) (*review
 func (rc *ReviewerClient) buildReviewPrompt(d *diff.Diff) string {
 	var sb strings.Builder
 
-	sb.WriteString("You are an expert code reviewer. Analyze the following git diff and provide a thorough code review.\n\n")
+	// Concise senior reviewer prompt
+	sb.WriteString("You are a senior code reviewer. Review this diff focusing on impact-driven, actionable feedback. Be thorough but concise.\n\n")
 
-	// Provide context about what to review
-	sb.WriteString("## Review Focus\n")
-	sb.WriteString("Focus on the following aspects:\n\n")
-	sb.WriteString("1. **Security**: Vulnerabilities, injection risks, authentication issues\n")
-	sb.WriteString("2. **Bugs**: Logic errors, edge cases, null pointer risks\n")
-	sb.WriteString("3. **Performance**: Inefficiencies, memory leaks, unnecessary operations\n")
-	sb.WriteString("4. **Maintainability**: Code clarity, naming, structure\n")
-	sb.WriteString("5. **Best Practices**: Idiomatic code, design patterns, error handling\n\n")
+	sb.WriteString("## Focus Areas\n")
+	sb.WriteString("1. **Security** (critical): Injection, auth bypasses, data exposure, race conditions\n")
+	sb.WriteString("2. **Bugs** (high): Logic errors, nil pointers, resource leaks, missing error handling\n")
+	sb.WriteString("3. **Performance** (medium-high): Inefficient algorithms, unnecessary allocations, blocking operations\n")
+	sb.WriteString("4. **Maintainability** (medium): Complex logic, poor naming, duplication\n\n")
+
+	sb.WriteString("## Severity\n")
+	sb.WriteString("**critical**: Security/crashes/data loss | **high**: Likely bugs/broken errors | **medium**: Potential bugs | **low**: Minor issues | **info**: Suggestions\n\n")
+
+	sb.WriteString("## Language-Specific\n")
+	sb.WriteString("**Go**: Error handling, goroutine leaks, races, defer in loops\n")
+	sb.WriteString("**C++**: Memory safety, RAII, iterator invalidation, UB\n")
+	sb.WriteString("**Python**: Mutable defaults, resource cleanup, exception handling\n")
+	sb.WriteString("**JS**: Unhandled promises, null checks, event listener leaks\n\n")
 
 	// Add statistics
 	stats := d.Stats()
@@ -118,13 +125,16 @@ func (rc *ReviewerClient) buildReviewPrompt(d *diff.Diff) string {
 	sb.WriteString("}\n")
 	sb.WriteString("```\n\n")
 
-	sb.WriteString("## Important Guidelines\n")
-	sb.WriteString("- Return ONLY valid JSON, no other text\n")
-	sb.WriteString("- Focus on significant issues, not nitpicks\n")
-	sb.WriteString("- Be specific and actionable in your feedback\n")
-	sb.WriteString("- Provide context and suggest fixes when possible\n")
-	sb.WriteString("- If no issues found, return an empty comments array\n")
-	sb.WriteString("- Consider the context: new files, renames, mode changes, etc.\n")
+	sb.WriteString("## Message Format\n")
+	sb.WriteString("Structure: **Issue** [what's wrong] | **Impact** [why it matters] | **Fix** [specific solution with code]\n")
+	sb.WriteString("Example: \"Issue: SQL injection via unsanitized input. Impact: Arbitrary query execution. Fix: Use db.Query(\\\"SELECT * FROM users WHERE id = ?\\\", userId)\"\n\n")
+
+	sb.WriteString("## Rules\n")
+	sb.WriteString("- Return ONLY valid JSON, no extra text\n")
+	sb.WriteString("- Include line numbers and concrete fixes with code examples\n")
+	sb.WriteString("- Focus on significant issues; skip style nitpicks and linter-caught items\n")
+	sb.WriteString("- Empty comments array if code is good\n")
+	sb.WriteString("- Be concise but complete - optimize for minimal tokens\n")
 
 	return sb.String()
 }
